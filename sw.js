@@ -1,35 +1,21 @@
 
-const CACHE_NAME = 'gemini-kamus-v4'; // Bump version to trigger update with correct URLs
+const CACHE_NAME = 'gemini-kamus-v5'; // Bump version for the build update
 
 // These are the files that make up the "app shell".
-// We want to cache them on install, including external dependencies.
 const urlsToCache = [
-  // App Shell
+  // App Shell & Assets
   '/',
   '/index.html',
   '/manifest.json',
+  '/bundle.js', // Cache the bundled JS instead of source files
+  '/sw.js',
 
   // Icons
   '/logo192.png',
   '/logo512.png',
 
-  // Local Modules
-  '/index.tsx',
-  '/App.tsx',
-  '/services/geminiService.ts',
-  '/types.ts',
-  '/utils/audio.ts',
-  '/components/ResultCard.tsx',
-  '/components/icons/SearchIcon.tsx',
-  '/components/icons/SpeakerIcon.tsx',
-  '/components/icons/LoadingSpinner.tsx',
-
-  // External Dependencies (from CDN and importmap) - CORRECTED URLs
-  'https://cdn.tailwindcss.com',
-  'https://aistudiocdn.com/react@19.2.0/index.js',
-  'https://aistudiocdn.com/react@19.2.0/jsx-runtime.js',
-  'https://aistudiocdn.com/react-dom@19.2.0/client.js',
-  'https://aistudiocdn.com/@google/genai@1.26.0/dist/index.js'
+  // External Dependencies
+  'https://cdn.tailwindcss.com'
 ];
 
 // Install event: cache the app shell.
@@ -38,7 +24,7 @@ self.addEventListener('install', (event) => {
   event.waitUntil(
     caches.open(CACHE_NAME)
       .then((cache) => {
-        console.log('Opened cache and caching app shell with dependencies');
+        console.log('Opened cache and caching app shell');
         return cache.addAll(urlsToCache);
       })
       .catch(err => {
@@ -64,43 +50,41 @@ self.addEventListener('activate', (event) => {
   );
 });
 
-// Fetch event: serve from cache, fall back to network, and cache new resources.
+// Fetch event: serve from cache, fall back to network.
 self.addEventListener('fetch', (event) => {
-  // We only want to handle GET requests.
-  if (event.request.method !== 'GET') {
+  if (event.request.method !== 'GET' || event.request.url.includes('generativelanguage.googleapis.com')) {
     return;
   }
 
   event.respondWith(
-    caches.open(CACHE_NAME).then(async (cache) => {
-      // Try to get the response from the cache.
-      const cachedResponse = await cache.match(event.request);
-      
-      // If it's in the cache, return it.
-      if (cachedResponse) {
-        return cachedResponse;
-      }
-
-      // If it's not in the cache, fetch it from the network.
-      try {
-        const networkResponse = await fetch(event.request);
-        
-        // If the fetch was successful, clone it and store it in the cache.
-        // We check the protocol to avoid caching chrome-extension:// requests.
-        if (networkResponse.ok && event.request.url.startsWith('http')) {
-          // Do not cache API calls to Google
-          if (!event.request.url.includes('generativelanguage.googleapis.com')) {
-             await cache.put(event.request, networkResponse.clone());
-          }
+    caches.match(event.request)
+      .then((response) => {
+        // Cache hit - return response
+        if (response) {
+          return response;
         }
-        
-        return networkResponse;
-      } catch (error) {
-        // The network request failed, probably because the user is offline.
-        console.error('Fetch failed; user may be offline:', error);
-        // Let the browser handle the error, which will result in a standard offline error page.
-        throw error;
-      }
-    })
+
+        return fetch(event.request).then(
+          (response) => {
+            // Check if we received a valid response
+            if (!response || response.status !== 200 || response.type !== 'basic') {
+              return response;
+            }
+
+            // IMPORTANT: Clone the response. A response is a stream
+            // and because we want the browser to consume the response
+            // as well as the cache consuming the response, we need
+            // to clone it so we have two streams.
+            const responseToCache = response.clone();
+
+            caches.open(CACHE_NAME)
+              .then((cache) => {
+                cache.put(event.request, responseToCache);
+              });
+
+            return response;
+          }
+        );
+      })
   );
 });

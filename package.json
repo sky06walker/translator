@@ -1,22 +1,20 @@
 {
   "name": "gemini-multilingual-kamus",
+  "version": "1.0.0",
   "private": true,
-  "version": "0.0.0",
-  "type": "module",
   "scripts": {
-    "dev": "vite",
-    "build": "vite build",
-    "preview": "vite preview"
+    "build": "rm -rf dist && mkdir dist && cp index.html manifest.json sw.js logo*.png dist/ && esbuild index.tsx --bundle --outfile=dist/bundle.js --loader:.tsx=tsx --define:process.env.NODE_ENV='\"production\"' --define:process.env.API_KEY='\"'\"$API_KEY\"'\"'",
+    "deploy": "npm run build && wrangler deploy"
   },
   "dependencies": {
-    "react-dom": "^19.2.0",
-    "@google/genai": "^1.26.0",
-    "react": "^19.2.0"
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1"
   },
   "devDependencies": {
-    "@types/node": "^22.14.0",
-    "@vitejs/plugin-react": "^5.0.0",
-    "typescript": "~5.8.2",
-    "vite": "^6.2.0"
+    "@types/react": "^18.3.3",
+    "@types/react-dom": "^18.3.0",
+    "esbuild": "^0.21.4",
+    "typescript": "^5.4.5",
+    "wrangler": "^3.60.3"
   }
 }

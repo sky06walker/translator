@@ -3,7 +3,7 @@
   "version": "1.0.0",
   "private": true,
   "scripts": {
-    "build": "rm -rf dist && mkdir dist && cp index.html manifest.json sw.js dist/ && esbuild index.tsx --bundle --outfile=dist/bundle.js --loader:.tsx=tsx --define:process.env.NODE_ENV='\"production\"' --define:process.env.API_KEY='\"'\"$API_KEY\"'\"'",
+    "build": "rm -rf dist && mkdir dist && cp index.html manifest.json sw.js dist/ && esbuild index.tsx --bundle --outfile=dist/bundle.js --loader:.tsx=tsx --external:react --external:react-dom --external:@google/genai --define:process.env.NODE_ENV='\"production\"' --define:process.env.API_KEY='\"'\"$API_KEY\"'\"'",
     "deploy": "npm run build && wrangler deploy"
   },
   "dependencies": {

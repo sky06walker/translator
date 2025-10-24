@@ -1,11 +1,13 @@
 // Cloudflare Pages Function for Gemini API
 // This file should be placed at: functions/api/translate.ts
+import { GoogleGenAI } from '@google/genai';
 
 interface Env {
   GEMINI_API_KEY: string;
 }
 
-export const onRequestPost: PagesFunction<Env> = async (context) => {
+// FIX: Changed signature to match other functions and avoid potential build errors.
+export const onRequestPost = async (context: { request: Request; env: Env }) => {
   try {
     const { text, sourceLang, targetLang, includeExample } = await context.request.json();
 
@@ -36,41 +38,22 @@ export const onRequestPost: PagesFunction<Env> = async (context) => {
     
     prompt += `\n\n${text}`;
 
-    // Call Gemini API
-    const geminiResponse = await fetch(
-      `https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent?key=${apiKey}`,
-      {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          contents: [{
-            parts: [{
-              text: prompt
-            }]
-          }],
-          generationConfig: {
+    // FIX: Use the @google/genai SDK instead of fetch for Gemini API calls.
+    const ai = new GoogleGenAI({ apiKey });
+
+    // FIX: Refactored the API call to use ai.models.generateContent and a non-deprecated model.
+    const result = await ai.models.generateContent({
+        model: 'gemini-2.5-flash',
+        contents: prompt,
+        config: {
             temperature: 0.3,
             topK: 40,
             topP: 0.95,
             maxOutputTokens: 1024,
-          }
-        })
-      }
-    );
-
-    if (!geminiResponse.ok) {
-      const error = await geminiResponse.text();
-      console.error('Gemini API error:', error);
-      return new Response(
-        JSON.stringify({ error: 'Translation failed' }),
-        { status: 500, headers: { 'Content-Type': 'application/json' } }
-      );
-    }
-
-    const data = await geminiResponse.json();
-    const responseText = data.candidates?.[0]?.content?.parts?.[0]?.text || '';
+        }
+    });
+    
+    const responseText = result.text;
 
     let translatedText = responseText;
     let example = '';

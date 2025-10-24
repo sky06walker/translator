@@ -7,7 +7,7 @@ interface Env {
 
 export const onRequestPost: PagesFunction<Env> = async (context) => {
   try {
-    const { text, sourceLang, targetLang } = await context.request.json();
+    const { text, sourceLang, targetLang, includeExample } = await context.request.json();
 
     if (!text || !sourceLang || !targetLang) {
       return new Response(
@@ -25,6 +25,17 @@ export const onRequestPost: PagesFunction<Env> = async (context) => {
       );
     }
 
+    // Build prompt based on whether example is needed
+    let prompt = `Translate the following text from ${sourceLang} to ${targetLang}.`;
+    
+    if (includeExample) {
+      prompt += ` Provide the translation first, then on a new line provide an example sentence using the translated word/phrase. Format: Translation: [translation]\nExample: [example sentence]`;
+    } else {
+      prompt += ` Only provide the translation, no explanations:`;
+    }
+    
+    prompt += `\n\n${text}`;
+
     // Call Gemini API
     const geminiResponse = await fetch(
       `https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent?key=${apiKey}`,
@@ -36,7 +47,7 @@ export const onRequestPost: PagesFunction<Env> = async (context) => {
         body: JSON.stringify({
           contents: [{
             parts: [{
-              text: `Translate the following text from ${sourceLang} to ${targetLang}. Only provide the translation, no explanations:\n\n${text}`
+              text: prompt
             }]
           }],
           generationConfig: {
@@ -59,10 +70,23 @@ export const onRequestPost: PagesFunction<Env> = async (context) => {
     }
 
     const data = await geminiResponse.json();
-    const translatedText = data.candidates?.[0]?.content?.parts?.[0]?.text || '';
+    const responseText = data.candidates?.[0]?.content?.parts?.[0]?.text || '';
+
+    let translatedText = responseText;
+    let example = '';
+
+    // Parse response if example was requested
+    if (includeExample && responseText.includes('Example:')) {
+      const parts = responseText.split('Example:');
+      translatedText = parts[0].replace('Translation:', '').trim();
+      example = parts[1].trim();
+    }
 
     return new Response(
-      JSON.stringify({ translatedText }),
+      JSON.stringify({ 
+        translatedText,
+        ...(includeExample && { example })
+      }),
       { 
         status: 200, 
         headers: { 

@@ -1,5 +1,5 @@
 import React, { useState, useCallback } from 'react';
-import { getTranslationAndExample, textToSpeech } from './services/geminiService';
+import { dictionaryLookup, textToSpeech } from './services/geminiService';
 import type { TranslationResult } from './types';
 import { decode, decodeAudioData } from './utils/audio';
 import { SearchIcon } from './components/icons/SearchIcon';
@@ -27,7 +27,7 @@ const App: React.FC = () => {
     setTranslationResult(null);
 
     try {
-      const result = await getTranslationAndExample(query);
+      const result = await dictionaryLookup(query);
       setTranslationResult(result);
     } catch (err) {
       console.error(err);
@@ -62,6 +62,8 @@ const App: React.FC = () => {
         source.onended = () => {
             setPlayingAudio(null);
         };
+      } else {
+        throw new Error('Received empty audio data.');
       }
     } catch (err) {
       console.error('Failed to play audio:', err);

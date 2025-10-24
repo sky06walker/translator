@@ -1,4 +1,3 @@
-
 const CACHE_NAME = 'gemini-kamus-v5'; // Bump version for the build update
 
 // These are the files that make up the "app shell".
@@ -9,10 +8,6 @@ const urlsToCache = [
   '/manifest.json',
   '/bundle.js', // Cache the bundled JS instead of source files
   '/sw.js',
-
-  // Icons
-  '/logo192.png',
-  '/logo512.png',
 
   // External Dependencies
   'https://cdn.tailwindcss.com'

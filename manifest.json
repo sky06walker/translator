@@ -1,0 +1,22 @@
+
+{
+  "name": "Gemini Multilingual Kamus",
+  "short_name": "Kamus",
+  "description": "An advanced dictionary app that provides high-accuracy translations between English, Malay, and Chinese, complete with example sentences and text-to-speech pronunciation, powered by Gemini.",
+  "start_url": ".",
+  "display": "standalone",
+  "background_color": "#f9fafb",
+  "theme_color": "#4F46E5",
+  "icons": [
+    {
+      "src": "/logo192.png",
+      "type": "image/png",
+      "sizes": "192x192"
+    },
+    {
+      "src": "/logo512.png",
+      "type": "image/png",
+      "sizes": "512x512"
+    }
+  ]
+}

@@ -47,7 +47,8 @@ self.addEventListener('activate', (event) => {
 
 // Fetch event: serve from cache, fall back to network.
 self.addEventListener('fetch', (event) => {
-  if (event.request.method !== 'GET' || event.request.url.includes('generativelanguage.googleapis.com')) {
+  const url = new URL(event.request.url);
+  if (event.request.method !== 'GET' || (url.protocol !== 'http:' && url.protocol !== 'https:')) {
     return;
   }
 

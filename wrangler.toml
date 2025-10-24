@@ -1,6 +1,7 @@
 name = "gemini-multilingual-kamus"
-compatibility_date = "2024-05-12"
-
-# This tells Wrangler that your site is a static asset project
-# and that all the files to be uploaded are in the "dist" directory.
+compatibility_date = "2024-10-24"
 pages_build_output_dir = "dist"
+
+# Local development
+[env.development]
+# GEMINI_API_KEY will be set via wrangler secret or environment variables

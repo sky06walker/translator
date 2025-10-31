@@ -8,7 +8,7 @@ interface Env {
 // FIX: Replaced PagesFunction with an explicit type for the context parameter to resolve the "Cannot find name 'PagesFunction'" error.
 export const onRequestPost = async (context: { request: Request; env: Env }) => {
   try {
-    const { text } = await context.request.json();
+    const { text } = (await context.request.json()) as { text: string };
 
     if (!text) {
       return new Response(JSON.stringify({ error: 'Missing text input' }), {

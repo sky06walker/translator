@@ -1,5 +1,5 @@
 {
-  "name": "Gemini Multilingual Kamus",
+  "name": "Translator",
   "short_name": "Kamus",
   "description": "An advanced dictionary app that provides high-accuracy translations between English, Malay, and Chinese, complete with example sentences and text-to-speech pronunciation, powered by Gemini.",
   "start_url": "/",

@@ -9,7 +9,7 @@ interface Env {
 // FIX: Changed signature to match other functions and avoid potential build errors.
 export const onRequestPost = async (context: { request: Request; env: Env }) => {
   try {
-    const { text, sourceLang, targetLang, includeExample } = await context.request.json();
+    const { text, sourceLang, targetLang, includeExample } = (await context.request.json()) as { text: string, sourceLang: string, targetLang: string, includeExample: boolean };
 
     if (!text || !sourceLang || !targetLang) {
       return new Response(

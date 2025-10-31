@@ -1,7 +1,6 @@
 import React, { useState, useCallback } from 'react';
 import { dictionaryLookup, textToSpeech } from './services/geminiService';
 import type { TranslationResult } from './types';
-import { decode, decodeAudioData } from './utils/audio';
 import { SearchIcon } from './components/icons/SearchIcon';
 import { LoadingSpinner } from './components/icons/LoadingSpinner';
 import { ResultCard } from './components/ResultCard';
@@ -37,24 +36,26 @@ const App: React.FC = () => {
     }
   }, [query]);
 
-  const handlePlayAudio = useCallback(async (text: string, language: string) => {
-    if (playingAudio === `${text}-${language}`) return;
+  const handlePlayAudio = useCallback(async (word: string, example: string, language: string) => {
+    const textToSpeak = `${word}. ${example}`;
+    if (playingAudio === `${word}-${language}`) return;
 
-    setPlayingAudio(`${text}-${language}`);
+    setPlayingAudio(`${word}-${language}`);
     try {
       if (!audioContextRef.current) {
-        audioContextRef.current = new (window.AudioContext || (window as any).webkitAudioContext)({ sampleRate: 24000 });
+        audioContextRef.current = new (window.AudioContext || (window as any).webkitAudioContext)();
       }
       const audioContext = audioContextRef.current;
-      const base64Audio = await textToSpeech(text);
+      const base64Audio = await textToSpeech(textToSpeak, language);
       
       if (base64Audio) {
-        const audioBuffer = await decodeAudioData(
-          decode(base64Audio),
-          audioContext,
-          24000,
-          1,
-        );
+        const binaryString = window.atob(base64Audio);
+        const len = binaryString.length;
+        const bytes = new Uint8Array(len);
+        for (let i = 0; i < len; i++) {
+          bytes[i] = binaryString.charCodeAt(i);
+        }
+        const audioBuffer = await audioContext.decodeAudioData(bytes.buffer);
         const source = audioContext.createBufferSource();
         source.buffer = audioBuffer;
         source.connect(audioContext.destination);
@@ -77,7 +78,7 @@ const App: React.FC = () => {
       <main className="container mx-auto px-4 py-8 md:py-16">
         <header className="text-center mb-10">
           <h1 className="text-4xl md:text-5xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-primary to-secondary">
-            Gemini Multilingual Kamus
+            Translator
           </h1>
           <p className="mt-4 text-lg text-gray-600 dark:text-gray-400">
             Instant, accurate translations between English, Malay, and Chinese.
@@ -122,7 +123,7 @@ const App: React.FC = () => {
                 <ResultCard 
                     key={index} 
                     translation={trans}
-                    onPlayAudio={() => handlePlayAudio(trans.word, trans.language)}
+                    onPlayAudio={() => handlePlayAudio(trans.word, trans.example, trans.language)}
                     isPlaying={playingAudio === `${trans.word}-${trans.language}`}
                 />
               ))}
@@ -131,7 +132,7 @@ const App: React.FC = () => {
         </div>
       </main>
        <footer className="text-center py-6 text-gray-500 dark:text-gray-400 text-sm">
-            <p>Powered by Google Gemini. Built with React & Tailwind CSS.</p>
+            <p>Powered by Google Gemini. Built with React & Tailwind CSS. WHStudio@2025</p>
         </footer>
     </div>
   );

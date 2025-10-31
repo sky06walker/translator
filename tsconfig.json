@@ -11,7 +11,7 @@
     ],
     "skipLibCheck": true,
     "types": [
-      "node"
+      "@cloudflare/workers-types"
     ],
     "moduleResolution": "bundler",
     "isolatedModules": true,
@@ -28,7 +28,6 @@
   },
   "exclude": [
     "node_modules",
-    "dist",
-    "functions"
+    "dist"
   ]
 }

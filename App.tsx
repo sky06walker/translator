@@ -1,6 +1,7 @@
 import React, { useState, useCallback } from 'react';
 import { dictionaryLookup, textToSpeech } from './services/geminiService';
 import type { TranslationResult } from './types';
+import { decode, decodeAudioData } from './utils/audio';
 import { SearchIcon } from './components/icons/SearchIcon';
 import { LoadingSpinner } from './components/icons/LoadingSpinner';
 import { ResultCard } from './components/ResultCard';
@@ -49,13 +50,11 @@ const App: React.FC = () => {
       const base64Audio = await textToSpeech(textToSpeak, language);
       
       if (base64Audio) {
-        const binaryString = window.atob(base64Audio);
-        const len = binaryString.length;
-        const bytes = new Uint8Array(len);
-        for (let i = 0; i < len; i++) {
-          bytes[i] = binaryString.charCodeAt(i);
-        }
-        const audioBuffer = await audioContext.decodeAudioData(bytes.buffer);
+        const audioData = decode(base64Audio);
+        // FIX: The Gemini TTS API returns raw 16-bit PCM audio data, not a file format.
+        // We need to manually create an AudioBuffer with the correct sample rate and channel count.
+        // Assuming 24kHz sample rate and 1 channel based on common TTS outputs.
+        const audioBuffer = await decodeAudioData(audioData, audioContext, 24000, 1);
         const source = audioContext.createBufferSource();
         source.buffer = audioBuffer;
         source.connect(audioContext.destination);

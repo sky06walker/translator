@@ -6,12 +6,17 @@ interface Env {
 }
 
 // FIX: Replaced PagesFunction with an explicit type for the context parameter to resolve the "Cannot find name 'PagesFunction'" error.
+interface TextToSpeechRequest {
+    text: string;
+    language: string;
+}
+
 export const onRequestPost = async (context: { request: Request; env: Env }) => {
   try {
-    const { text } = await context.request.json();
+    const { text, language } = await context.request.json() as TextToSpeechRequest;
 
-    if (!text) {
-      return new Response(JSON.stringify({ error: 'Missing text for speech' }), {
+    if (!text || !language) {
+      return new Response(JSON.stringify({ error: 'Missing text or language for speech' }), {
         status: 400,
         headers: { 'Content-Type': 'application/json' },
       });
@@ -29,9 +34,23 @@ export const onRequestPost = async (context: { request: Request; env: Env }) => 
     const ai = new GoogleGenAI({ apiKey });
 
     // FIX: Refactored the API call to use ai.models.generateContent with the correct config structure and Modality enum.
+    // FIX: Provide the language code to the Gemini API to ensure correct TTS for non-English text.
+    const getLanguageCode = (lang: string): string => {
+        switch (lang.toLowerCase()) {
+            case 'malay':
+                return 'ms-MY';
+            case 'chinese':
+                return 'zh-CN';
+            default:
+                return 'en-US';
+        }
+    };
+
+    const languageCode = getLanguageCode(language);
+    
     const ttsResponse = await ai.models.generateContent({
       model: "gemini-2.5-pro-preview-tts",
-      contents: [{ parts: [{ text: text }] }],
+      contents: [{ parts: [{ text: `<lang="${languageCode}">${text}` }] }],
       config: {
         responseModalities: [Modality.AUDIO],
       },

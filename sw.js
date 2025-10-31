@@ -8,6 +8,8 @@ const urlsToCache = [
   '/manifest.json',
   '/bundle.js', // Cache the bundled JS instead of source files
   '/sw.js',
+  '/icon-192.svg',
+  '/icon-512.svg',
 
   // External Dependencies
   'https://cdn.tailwindcss.com'

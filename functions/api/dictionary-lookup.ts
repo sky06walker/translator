@@ -30,9 +30,9 @@ export const onRequestPost = async (context: { request: Request; env: Env }) => 
     
     const prompt = `You are an advanced multilingual dictionary. For the given word or phrase "${text}", perform the following steps:
 1.  Detect its language (must be one of: English, Malay, or Chinese).
-2.  Provide the translations for the other two languages.
+2.  Provide the translations for the other two languages, **and also include the original word in the results**.
 3.  For each translation (and the original word), provide a simple, clear example sentence.
-4.  Return the result as a JSON object that strictly follows the provided schema. The 'sourceLanguage' field should contain the detected language of the input text.`;
+4.  Return the result as a JSON object that strictly follows the provided schema. The 'sourceLanguage' field should contain the detected language of the input text. The 'translations' array should contain three items: the original word and its two translations.`;
 
     // FIX: Refactored the API call to use ai.models.generateContent with the correct config structure and Type enum for schema.
     const response = await ai.models.generateContent({

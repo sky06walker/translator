@@ -1,20 +1,84 @@
-<div align="center">
-<img width="1200" height="475" alt="GHBanner" src="https://github.com/user-attachments/assets/0aa67016-6eaf-458a-adb2-6e31a0763ed6" />
-</div>
+# Multilingual Translator
 
-# Run and deploy your AI Studio app
+This is a multilingual translator application built with React and Capacitor, enabling it to run as a web app and a native Android app. It leverages Google's Gemini API for translation and dictionary lookups and Cloudflare Workers for serverless functions.
 
-This contains everything you need to run your app locally.
+## Key Technologies
 
-View your app in AI Studio: https://ai.studio/apps/drive/1CBr4NoCN99pYD9dilT-4RrfKplzVTW2L
+- **Frontend:** React, Vite
+- **Mobile:** Capacitor
+- **Backend:** Cloudflare Workers
+- **Translation:** Google Gemini API
 
-## Run Locally
+## Prerequisites
 
-**Prerequisites:**  Node.js
+Before you begin, ensure you have the following installed:
 
+- [Node.js and pnpm](https://pnpm.io/installation)
+- [Android Studio](https://developer.android.com/studio) (for Android development)
+- [Cloudflare Wrangler CLI](https://developers.cloudflare.com/workers/wrangler/install-and-update/) (for deployment)
 
-1. Install dependencies:
-   `npm install`
-2. Set the `GEMINI_API_KEY` in [.env.local](.env.local) to your Gemini API key
-3. Run the app:
-   `npm run dev`
+## Project Setup
+
+1.  **Clone the repository:**
+    ```bash
+    git clone https://github.com/your-username/translator.git
+    cd translator
+    ```
+
+2.  **Install dependencies:**
+    ```bash
+    pnpm install
+    ```
+
+3.  **Set up environment variables:**
+    Create a `.env` file in the root of the project and add your Google Gemini API key:
+    ```
+    GEMINI_API_KEY=your_api_key
+    ```
+
+## Build Instructions
+
+### Development
+
+To build the application for development and run it locally, use the following command:
+
+```bash
+pnpm run dev
+```
+
+This will start a local development server at `http://localhost:8788`.
+
+### Production
+
+To build the application for production, use the following command:
+
+```bash
+pnpm run build
+```
+
+This will create a production-ready build in the `dist` directory.
+
+## Deployment
+
+### Web (Cloudflare Pages)
+
+The web application is deployed to Cloudflare Pages. The `wrangler.toml` file is configured for this purpose. To deploy the application, run the following command:
+
+```bash
+wrangler pages deploy dist
+```
+
+### Android
+
+1.  **Sync the Capacitor project:**
+    ```bash
+    npx cap sync
+    ```
+
+2.  **Open the Android project in Android Studio:**
+    ```bash
+    npx cap open android
+    ```
+
+3.  **Build the Android app:**
+    In Android Studio, you can build the app and run it on an emulator or a physical device.

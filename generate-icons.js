@@ -2,8 +2,9 @@
 // Run this script to generate PWA icons
 // Usage: node generate-icons.js
 
-const fs = require('fs');
+const fs = require('fs').promises;
 const path = require('path');
+const sharp = require('sharp');
 
 // SVG icon template
 const createSVGIcon = (size) => `
@@ -15,23 +16,36 @@ const createSVGIcon = (size) => `
     </linearGradient>
   </defs>
   <rect width="${size}" height="${size}" rx="${size * 0.15}" fill="url(#grad)"/>
-  <text x="50%" y="50%" font-family="Arial, sans-serif" font-size="${size * 0.4}" font-weight="bold" fill="white" text-anchor="middle" dominant-baseline="central">K</text>
+  <text x="50%" y="50%" font-family="Arial, sans-serif" font-size="${size * 0.4}" font-weight="bold" fill="white" text-anchor="middle" dominant-baseline="central">T</text>
   <path d="M ${size * 0.2} ${size * 0.75} Q ${size * 0.35} ${size * 0.65}, ${size * 0.5} ${size * 0.75} T ${size * 0.8} ${size * 0.75}" stroke="white" stroke-width="${size * 0.03}" fill="none" stroke-linecap="round"/>
 </svg>`.trim();
 
-// Output directory (project root)
-const outputDir = __dirname;
+const androidIconSizes = {
+  'mipmap-mdpi': 48,
+  'mipmap-hdpi': 72,
+  'mipmap-xhdpi': 96,
+  'mipmap-xxhdpi': 144,
+  'mipmap-xxxhdpi': 192,
+};
 
-// Generate icons
-const sizes = [192, 512];
+async function generateIcons() {
+  const outputDir = path.join(__dirname, 'android', 'app', 'src', 'main', 'res');
 
-sizes.forEach(size => {
-  const svg = createSVGIcon(size);
-  const filename = `icon-${size}.svg`;
-  const filepath = path.join(outputDir, filename);
-  
-  fs.writeFileSync(filepath, svg);
-  console.log(`✓ Generated ${filename}`);
-});
+  for (const [dir, size] of Object.entries(androidIconSizes)) {
+    const svg = createSVGIcon(size);
+    const dirPath = path.join(outputDir, dir);
+    await fs.mkdir(dirPath, { recursive: true });
 
-console.log('\n📱 PWA icons generated successfully!');
+    const filepath = path.join(dirPath, 'ic_launcher.png');
+    await sharp(Buffer.from(svg)).toFile(filepath);
+    console.log(`✓ Generated ${filepath}`);
+    
+    const roundFilepath = path.join(dirPath, 'ic_launcher_round.png');
+    await sharp(Buffer.from(svg)).toFile(roundFilepath);
+    console.log(`✓ Generated ${roundFilepath}`);
+  }
+
+  console.log('\n📱 Android icons generated successfully!');
+}
+
+generateIcons();

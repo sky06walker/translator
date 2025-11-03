@@ -11,7 +11,18 @@ interface TextToSpeechRequest {
     language: string;
 }
 
-export const onRequestPost = async (context: { request: Request; env: Env }) => {
+export const onRequest = async (context: { request: Request; env: Env }) => {
+  // Handle CORS preflight requests
+  if (context.request.method === 'OPTIONS') {
+    return new Response(null, {
+      headers: {
+        'Access-Control-Allow-Origin': '*',
+        'Access-Control-Allow-Methods': 'POST, OPTIONS',
+        'Access-Control-Allow-Headers': 'Content-Type',
+      },
+    });
+  }
+
   try {
     const { text, language } = await context.request.json() as TextToSpeechRequest;
 
@@ -67,13 +78,19 @@ export const onRequestPost = async (context: { request: Request; env: Env }) => 
 
     return new Response(JSON.stringify({ audioContent }), {
       status: 200,
-      headers: { 'Content-Type': 'application/json' },
+      headers: {
+        'Content-Type': 'application/json',
+        'Access-Control-Allow-Origin': '*'
+      },
     });
   } catch (error) {
     console.error('TTS Server error:', error);
     return new Response(JSON.stringify({ error: 'Internal server error' }), {
       status: 500,
-      headers: { 'Content-Type': 'application/json' },
+      headers: {
+        'Content-Type': 'application/json',
+        'Access-Control-Allow-Origin': '*'
+      },
     });
   }
 };

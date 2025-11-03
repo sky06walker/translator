@@ -6,7 +6,18 @@ interface Env {
 }
 
 // FIX: Replaced PagesFunction with an explicit type for the context parameter to resolve the "Cannot find name 'PagesFunction'" error.
-export const onRequestPost = async (context: { request: Request; env: Env }) => {
+export const onRequest = async (context: { request: Request; env: Env }) => {
+  // Handle CORS preflight requests
+  if (context.request.method === 'OPTIONS') {
+    return new Response(null, {
+      headers: {
+        'Access-Control-Allow-Origin': '*',
+        'Access-Control-Allow-Methods': 'POST, OPTIONS',
+        'Access-Control-Allow-Headers': 'Content-Type',
+      },
+    });
+  }
+
   try {
     const { text } = (await context.request.json()) as { text: string };
 
@@ -102,20 +113,29 @@ export const onRequestPost = async (context: { request: Request; env: Env }) => 
 
       return new Response(JSON.stringify(sanitizedResponse), {
         status: 200,
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Content-Type': 'application/json',
+          'Access-Control-Allow-Origin': '*'
+        },
       });
     } catch (e) {
       console.error('Failed to parse or validate Gemini response:', responseText, e);
       return new Response(JSON.stringify({ error: 'Invalid response from AI model' }), {
         status: 500,
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Content-Type': 'application/json',
+          'Access-Control-Allow-Origin': '*'
+        },
       });
     }
   } catch (error) {
     console.error('Server error:', error);
     return new Response(JSON.stringify({ error: 'Internal server error' }), {
       status: 500,
-      headers: { 'Content-Type': 'application/json' },
+      headers: {
+        'Content-Type': 'application/json',
+        'Access-Control-Allow-Origin': '*'
+      },
     });
   }
 };

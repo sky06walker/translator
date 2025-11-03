@@ -1,4 +1,3 @@
-
 export interface Translation {
   language: 'English' | 'Malay' | 'Chinese';
   word: string;

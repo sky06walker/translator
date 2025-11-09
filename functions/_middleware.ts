@@ -3,7 +3,9 @@
 // Define the CORS headers
 const allowedOrigins = [
   'https://translator-478.pages.dev', // Production
-  'http://localhost:8788' // Development
+  'http://localhost:8788', // Development
+  'https://localhost', // Capacitor Android
+  'capacitor://localhost' // Capacitor iOS
 ];
 
 const corsHeaders = (origin: string) => ({

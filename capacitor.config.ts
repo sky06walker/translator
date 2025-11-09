@@ -12,12 +12,6 @@ const config: CapacitorConfig = {
   "server": {
     "androidScheme": "https"
   },
-  "resources": {
-    "icon": {
-      "foreground": "icon-512.svg",
-      "background": "icon-512.svg"
-    }
-  }
 };
 
 export default config;

@@ -50,7 +50,7 @@ export const onRequest = async (context: { request: Request; env: Env }) => {
     const languageCode = getLanguageCode(language);
     
     const ttsResponse = await ai.models.generateContent({
-      model: "gemini-2.5-pro-preview-tts",
+      model: "gemini-1.5-flash-tts",
       contents: [{ parts: [{ text: `<lang="${languageCode}">${text}` }] }],
       config: {
         responseModalities: [Modality.AUDIO],

@@ -3,6 +3,7 @@
 // Define the CORS headers
 const allowedOrigins = [
   'https://translator-478.pages.dev', // Production
+  'https://translator.whstudio.dpdns.org', // Custom Domain
   'http://localhost:8788', // Development
   'https://localhost', // Capacitor Android
   'capacitor://localhost' // Capacitor iOS

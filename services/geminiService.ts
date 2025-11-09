@@ -3,7 +3,7 @@ import type { TranslationResult } from '../types';
 
 const getBaseUrl = () => {
   if (Capacitor.isNativePlatform()) {
-    return 'https://translator-478.pages.dev';
+    return 'https://translator.whstudio.dpdns.org';
   }
   return '';
 };

@@ -39,12 +39,18 @@ export const onRequest = async (context: { request: Request; env: Env }) => {
     // FIX: Use the @google/genai SDK instead of fetch for Gemini API calls.
     const ai = new GoogleGenAI({ apiKey });
     
-    const prompt = `You are an advanced multilingual dictionary. For the given word or phrase "${text}", perform the following steps:
-1.  Detect its language (must be one of: English, Malay, or Chinese).
-2.  Provide the translations for the other two languages, **and also include the original word in the results**.
-3.  For each translation (and the original word), provide a simple, clear example sentence.
-4.  The 'language' field for each item in the 'translations' array MUST be one of "English", "Malay", or "Chinese".
-5.  Return the result as a JSON object that strictly follows the provided schema. The 'sourceLanguage' field should contain the detected language of the input text. The 'translations' array should contain three items: the original word and its two translations.`;
+    const prompt = `You are an expert multilingual dictionary. Your task is to take a word or phrase, "${text}", and provide comprehensive details for it and its translations in English, Malay, and Chinese.
+
+Follow these instructions precisely:
+1.  **Detect Language**: First, identify the language of the input "${text}". It must be one of English, Malay, or Chinese.
+2.  **Translate**: Provide translations for the other two languages. You must return a total of three items: the original word and its two translations.
+3.  **Provide Details for Each Word (Original and Translations)**: For each of the three items, you MUST provide the following fields:
+    *   \`language\`: The language of the word ("English", "Malay", or "Chinese"). This is MANDATORY.
+    *   \`word\`: The word or phrase itself. This is MANDATORY.
+    *   \`explanation\`: A clear and concise explanation of the word's meaning and usage. **The explanation MUST be in the same language as the 'language' field.** For example, if the language is "Chinese", the explanation must be in Chinese. This is MANDATORY.
+    *   \`example\`: A simple example sentence demonstrating how the word is used. This is MANDATORY.
+    *   \`pinyin\`: If the language is "Chinese", you MUST provide the Hanyu Pinyin. If the language is NOT "Chinese", you MUST OMIT this field entirely.
+4.  **Format Output**: Return a single, valid JSON object. The JSON object must strictly adhere to the provided JSON schema. Do not include any text or markdown formatting outside of the JSON object.`;
 
     // FIX: Refactored the API call to use ai.models.generateContent with the correct config structure and Type enum for schema.
     const response = await ai.models.generateContent({
@@ -64,8 +70,10 @@ export const onRequest = async (context: { request: Request; env: Env }) => {
                   language: { type: Type.STRING, enum: ['English', 'Malay', 'Chinese'] },
                   word: { type: Type.STRING },
                   example: { type: Type.STRING },
+                  explanation: { type: Type.STRING },
+                  pinyin: { type: Type.STRING },
                 },
-                required: ['language', 'word', 'example'],
+                required: ['language', 'word', 'explanation', 'example'],
               },
             },
           },
@@ -94,12 +102,14 @@ export const onRequest = async (context: { request: Request; env: Env }) => {
       const sanitizedTranslations = jsonResponse.translations.filter(
         (t: any) => {
           if (!t) return false;
-          const { language, word, example } = t;
+          const { language, word, explanation, example } = t;
           return (
             typeof language === 'string' &&
             validLangs.includes(language) &&
             typeof word === 'string' &&
             word.trim() !== '' &&
+            typeof explanation === 'string' &&
+            explanation.trim() !== '' &&
             typeof example === 'string' &&
             example.trim() !== ''
           );

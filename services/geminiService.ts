@@ -2,7 +2,7 @@ import type { TranslationResult } from '../types';
 
 export async function dictionaryLookup(text: string): Promise<TranslationResult> {
   try {
-    const response = await fetch('https://translator-478.pages.dev/api/dictionary-lookup', {
+    const response = await fetch('/api/dictionary-lookup', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -25,7 +25,7 @@ export async function dictionaryLookup(text: string): Promise<TranslationResult>
 
 export async function textToSpeech(text: string, language: string): Promise<string> {
   try {
-    const response = await fetch('https://translator-478.pages.dev/api/text-to-speech', {
+    const response = await fetch('/api/text-to-speech', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',

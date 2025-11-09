@@ -17,8 +17,11 @@ export const ResultCard: React.FC<ResultCardProps> = ({ translation, onPlayAudio
         <div>
           <h3 className="text-sm font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">{translation.language}</h3>
           <p className="text-3xl font-bold text-primary dark:text-secondary mt-1">{translation.word}</p>
+          {translation.pinyin && (
+            <p className="text-lg text-gray-500 dark:text-gray-400 mt-1">{translation.pinyin}</p>
+          )}
         </div>
-        <button 
+        <button
           onClick={onPlayAudio}
           disabled={isPlaying}
           className="p-3 rounded-full bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors disabled:cursor-not-allowed"
@@ -26,6 +29,10 @@ export const ResultCard: React.FC<ResultCardProps> = ({ translation, onPlayAudio
         >
           {isPlaying ? <LoadingSpinner className="w-6 h-6 text-primary dark:text-secondary" /> : <SpeakerIcon className="w-6 h-6 text-gray-600 dark:text-gray-300" />}
         </button>
+      </div>
+      <div className="mt-4 pt-4 border-t border-gray-200 dark:border-gray-700">
+        <h4 className="text-xs font-semibold text-gray-400 dark:text-gray-500 uppercase tracking-wider">Explanation</h4>
+        <p className="text-gray-600 dark:text-gray-300 mt-2">{translation.explanation}</p>
       </div>
       <div className="mt-4 pt-4 border-t border-gray-200 dark:border-gray-700">
          <h4 className="text-xs font-semibold text-gray-400 dark:text-gray-500 uppercase tracking-wider">Example</h4>

@@ -37,8 +37,8 @@ const App: React.FC = () => {
     }
   }, [query]);
 
-  const handlePlayAudio = useCallback(async (word: string, example: string, language: string) => {
-    const textToSpeak = `${word}. ${example}`;
+  const handlePlayAudio = useCallback(async (word: string, explanation: string, example: string, language: string) => {
+    const textToSpeak = `${word}. ${explanation}. ${example}`;
     if (playingAudio === `${word}-${language}`) return;
 
     setPlayingAudio(`${word}-${language}`);
@@ -122,7 +122,7 @@ const App: React.FC = () => {
                 <ResultCard 
                     key={index} 
                     translation={trans}
-                    onPlayAudio={() => handlePlayAudio(trans.word, trans.example, trans.language)}
+                    onPlayAudio={() => handlePlayAudio(trans.word, trans.explanation, trans.example, trans.language)}
                     isPlaying={playingAudio === `${trans.word}-${trans.language}`}
                 />
               ))}

@@ -11,6 +11,7 @@ const config: CapacitorConfig = {
   },
   "server": {
     "androidScheme": "https",
+    "hostname": "translator.whstudio.dpdns.org"
   },
 };
 

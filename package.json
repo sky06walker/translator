@@ -23,7 +23,7 @@
   },
   "scripts": {
     "icons": "node generate-icons.js",
-    "build": "rimraf dist && pnpm run icons && mkdir dist && copyfiles index.html manifest.json sw.js _redirects icon-*.svg dist && esbuild index.tsx --bundle --outfile=dist/bundle.js --loader:.tsx=tsx --define:process.env.NODE_ENV='\"production\"' --external:@google/genai",
+    "build": "rimraf dist && pnpm run icons && mkdir dist && copyfiles index.html manifest.json sw.js _redirects icon-*.svg dist && esbuild index.tsx --bundle --minify --outfile=dist/bundle.js --loader:.tsx=tsx --define:process.env.NODE_ENV='\"production\"' --external:@google/genai",
     "build:dev": "rimraf dist && pnpm run icons && mkdir dist && copyfiles index.html manifest.json sw.js _redirects icon-*.svg dist && esbuild index.tsx --bundle --outfile=dist/bundle.js --loader:.tsx=tsx --define:process.env.NODE_ENV='\"development\"' --external:@google/genai",
     "dev": "pnpm run build:dev && wrangler pages dev dist --port 8788"
   },

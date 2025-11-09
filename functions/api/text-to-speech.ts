@@ -12,16 +12,6 @@ interface TextToSpeechRequest {
 }
 
 export const onRequest = async (context: { request: Request; env: Env }) => {
-  // Handle CORS preflight requests
-  if (context.request.method === 'OPTIONS') {
-    return new Response(null, {
-      headers: {
-        'Access-Control-Allow-Origin': '*',
-        'Access-Control-Allow-Methods': 'POST, OPTIONS',
-        'Access-Control-Allow-Headers': 'Content-Type',
-      },
-    });
-  }
 
   try {
     const { text, language } = await context.request.json() as TextToSpeechRequest;
@@ -80,7 +70,6 @@ export const onRequest = async (context: { request: Request; env: Env }) => {
       status: 200,
       headers: {
         'Content-Type': 'application/json',
-        'Access-Control-Allow-Origin': '*'
       },
     });
   } catch (error) {
@@ -89,7 +78,6 @@ export const onRequest = async (context: { request: Request; env: Env }) => {
       status: 500,
       headers: {
         'Content-Type': 'application/json',
-        'Access-Control-Allow-Origin': '*'
       },
     });
   }

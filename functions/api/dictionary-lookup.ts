@@ -7,16 +7,6 @@ interface Env {
 
 // FIX: Replaced PagesFunction with an explicit type for the context parameter to resolve the "Cannot find name 'PagesFunction'" error.
 export const onRequest = async (context: { request: Request; env: Env }) => {
-  // Handle CORS preflight requests
-  if (context.request.method === 'OPTIONS') {
-    return new Response(null, {
-      headers: {
-        'Access-Control-Allow-Origin': '*',
-        'Access-Control-Allow-Methods': 'POST, OPTIONS',
-        'Access-Control-Allow-Headers': 'Content-Type',
-      },
-    });
-  }
 
   try {
     const { text } = (await context.request.json()) as { text: string };
@@ -125,7 +115,6 @@ Follow these instructions precisely:
         status: 200,
         headers: {
           'Content-Type': 'application/json',
-          'Access-Control-Allow-Origin': '*'
         },
       });
     } catch (e) {
@@ -134,7 +123,6 @@ Follow these instructions precisely:
         status: 500,
         headers: {
           'Content-Type': 'application/json',
-          'Access-Control-Allow-Origin': '*'
         },
       });
     }
@@ -144,7 +132,6 @@ Follow these instructions precisely:
       status: 500,
       headers: {
         'Content-Type': 'application/json',
-        'Access-Control-Allow-Origin': '*'
       },
     });
   }

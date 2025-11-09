@@ -1,8 +1,18 @@
+import { Capacitor } from '@capacitor/core';
 import type { TranslationResult } from '../types';
+
+const getBaseUrl = () => {
+  if (Capacitor.isNativePlatform()) {
+    return 'https://translator.whstudio.dpdns.org';
+  }
+  return '';
+};
+
+const API_BASE_URL = getBaseUrl();
 
 export async function dictionaryLookup(text: string): Promise<TranslationResult> {
   try {
-    const response = await fetch('/api/dictionary-lookup', {
+    const response = await fetch(`${API_BASE_URL}/api/dictionary-lookup`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -25,7 +35,7 @@ export async function dictionaryLookup(text: string): Promise<TranslationResult>
 
 export async function textToSpeech(text: string, language: string): Promise<string> {
   try {
-    const response = await fetch('/api/text-to-speech', {
+    const response = await fetch(`${API_BASE_URL}/api/text-to-speech`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',

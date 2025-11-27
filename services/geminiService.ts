@@ -24,24 +24,41 @@ export async function dictionaryLookup(text: string): Promise<TranslationResult>
 }
 
 export async function textToSpeech(text: string, language: string): Promise<string> {
-  try {
-    const response = await fetch('/api/text-to-speech', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({ text, language }),
-    });
-
-    if (!response.ok) {
-        const error = (await response.json()) as { error?: string };
-        throw new Error(error.error || 'Text-to-speech failed');
+  return new Promise((resolve, reject) => {
+    if (!window.speechSynthesis) {
+      reject(new Error('Text-to-speech not supported in this browser'));
+      return;
     }
 
-    const data = (await response.json()) as { audioContent: string };
-    return data.audioContent; // The base64 encoded audio string
-  } catch (error) {
-    console.error('Text-to-speech error:', error);
-    throw new Error('Text-to-speech failed');
-  }
+    // Map language names to speech synthesis language codes
+    const getLanguageCode = (lang: string): string => {
+      switch (lang.toLowerCase()) {
+        case 'malay':
+          return 'ms-MY';
+        case 'chinese':
+          return 'zh-CN';
+        case 'english':
+        default:
+          return 'en-US';
+      }
+    };
+
+    const utterance = new SpeechSynthesisUtterance(text);
+    utterance.lang = getLanguageCode(language);
+    utterance.rate = 0.9;
+    utterance.pitch = 1.0;
+
+    utterance.onend = () => {
+      // Return empty string since we're using direct speech synthesis
+      // No base64 audio needed for Web Speech API
+      resolve('');
+    };
+
+    utterance.onerror = (event) => {
+      reject(new Error(`Speech synthesis failed: ${event.error}`));
+    };
+
+    window.speechSynthesis.speak(utterance);
+  });
 }
+

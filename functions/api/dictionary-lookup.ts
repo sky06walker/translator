@@ -1,11 +1,9 @@
 // functions/api/dictionary-lookup.ts
-import { GoogleGenAI, Type } from '@google/genai';
 
 interface Env {
-  GEMINI_API_KEY: string;
+  // No API key required for Pollinations.ai
 }
 
-// FIX: Replaced PagesFunction with an explicit type for the context parameter to resolve the "Cannot find name 'PagesFunction'" error.
 export const onRequest = async (context: { request: Request; env: Env }) => {
 
   try {
@@ -18,18 +16,7 @@ export const onRequest = async (context: { request: Request; env: Env }) => {
       });
     }
 
-    const apiKey = context.env.GEMINI_API_KEY;
-    if (!apiKey) {
-      return new Response(
-        JSON.stringify({ error: 'API key not configured' }),
-        { status: 500, headers: { 'Content-Type': 'application/json' } }
-      );
-    }
-    
-    // FIX: Use the @google/genai SDK instead of fetch for Gemini API calls.
-    const ai = new GoogleGenAI({ apiKey });
-    
-    const prompt = `You are an expert multilingual dictionary. Your task is to take a word or phrase, "${text}", and provide comprehensive details for it and its translations in English, Malay, and Chinese.
+    const systemPrompt = `You are an expert multilingual dictionary. Your task is to take a word or phrase, "${text}", and provide comprehensive details for it and its translations in English, Malay, and Chinese.
 
 Follow these instructions precisely:
 1.  **Detect Language**: First, identify the language of the input "${text}". It must be one of English, Malay, or Chinese.
@@ -40,40 +27,53 @@ Follow these instructions precisely:
     *   \`explanation\`: A clear and concise explanation of the word's meaning and usage. **The explanation MUST be in the same language as the 'language' field.** For example, if the language is "Chinese", the explanation must be in Chinese. This is MANDATORY.
     *   \`example\`: A simple example sentence demonstrating how the word is used. This is MANDATORY.
     *   \`pinyin\`: If the language is "Chinese", you MUST provide the Hanyu Pinyin. If the language is NOT "Chinese", you MUST OMIT this field entirely.
-4.  **Format Output**: Return a single, valid JSON object. The JSON object must strictly adhere to the provided JSON schema. Do not include any text or markdown formatting outside of the JSON object.`;
-
-    // FIX: Refactored the API call to use ai.models.generateContent with the correct config structure and Type enum for schema.
-    const response = await ai.models.generateContent({
-      model: 'gemini-2.5-flash',
-      contents: prompt,
-      config: {
-        responseMimeType: 'application/json',
-        responseSchema: {
-          type: Type.OBJECT,
-          properties: {
-            sourceLanguage: { type: Type.STRING, enum: ['English', 'Malay', 'Chinese'] },
-            translations: {
-              type: Type.ARRAY,
-              items: {
-                type: Type.OBJECT,
-                properties: {
-                  language: { type: Type.STRING, enum: ['English', 'Malay', 'Chinese'] },
-                  word: { type: Type.STRING },
-                  example: { type: Type.STRING },
-                  explanation: { type: Type.STRING },
-                  pinyin: { type: Type.STRING },
-                },
-                required: ['language', 'word', 'explanation', 'example'],
-              },
-            },
-          },
-          required: ['sourceLanguage', 'translations'],
+4.  **Format Output**: Return a single, valid JSON object. The JSON object must strictly adhere to the following structure:
+    {
+      "sourceLanguage": "English", // or "Malay" or "Chinese"
+      "translations": [
+        {
+          "language": "English",
+          "word": "Apple",
+          "explanation": "A round fruit with red or green skin and a white inside.",
+          "example": "I ate an apple for lunch."
         },
+        {
+          "language": "Malay",
+          "word": "Epal",
+          "explanation": "Sejenis buah bulat yang mempunyai kulit merah atau hijau dan isi putih.",
+          "example": "Saya makan sebiji epal untuk makan tengah hari."
+        },
+        {
+          "language": "Chinese",
+          "word": "苹果",
+          "explanation": "一种圆形的落叶乔木果实，通常为红色、绿色或黄色。",
+          "example": "我午餐吃了一个苹果。",
+          "pinyin": "píng guǒ"
+        }
+      ]
+    }
+    Do not include any text or markdown formatting outside of the JSON object.`;
+
+    const response = await fetch('https://text.pollinations.ai/openai', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
       },
+      body: JSON.stringify({
+        model: 'openai',
+        messages: [
+          { role: 'system', content: systemPrompt },
+          { role: 'user', content: `Analyze the word: "${text}"` }
+        ],
+      }),
     });
 
-    // FIX: Used the recommended `response.text` to extract the text from the response.
-    const responseText = response.text;
+    if (!response.ok) {
+      throw new Error(`Pollinations API error: ${response.statusText}`);
+    }
+
+    const data = await response.json() as any;
+    const responseText = data.choices[0].message.content;
 
     try {
       const jsonResponse = JSON.parse(responseText);
@@ -118,7 +118,7 @@ Follow these instructions precisely:
         },
       });
     } catch (e) {
-      console.error('Failed to parse or validate Gemini response:', responseText, e);
+      console.error('Failed to parse or validate Pollinations response:', responseText, e);
       return new Response(JSON.stringify({ error: 'Invalid response from AI model' }), {
         status: 500,
         headers: {

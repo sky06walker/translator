@@ -1,7 +1,6 @@
 import React, { useState, useCallback } from 'react';
 import { dictionaryLookup, textToSpeech } from './services/geminiService';
 import type { TranslationResult } from './types';
-import { decode, decodeAudioData } from './utils/audio';
 import { SearchIcon } from './components/icons/SearchIcon';
 import { LoadingSpinner } from './components/icons/LoadingSpinner';
 import { ResultCard } from './components/ResultCard';
@@ -12,8 +11,6 @@ const App: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
   const [translationResult, setTranslationResult] = useState<TranslationResult | null>(null);
   const [playingAudio, setPlayingAudio] = useState<string | null>(null);
-
-  const audioContextRef = React.useRef<AudioContext | null>(null);
 
   const handleSearch = useCallback(async (event: React.FormEvent) => {
     event.preventDefault();
@@ -43,28 +40,9 @@ const App: React.FC = () => {
 
     setPlayingAudio(`${word}-${language}`);
     try {
-      if (!audioContextRef.current) {
-        audioContextRef.current = new (window.AudioContext || (window as any).webkitAudioContext)();
-      }
-      const audioContext = audioContextRef.current;
-      const base64Audio = await textToSpeech(textToSpeak, language);
-      
-      if (base64Audio) {
-        const audioData = decode(base64Audio);
-        // FIX: The Gemini TTS API returns raw 16-bit PCM audio data, not a file format.
-        // We need to manually create an AudioBuffer with the correct sample rate and channel count.
-        // Assuming 24kHz sample rate and 1 channel based on common TTS outputs.
-        const audioBuffer = await decodeAudioData(audioData, audioContext, 24000, 1);
-        const source = audioContext.createBufferSource();
-        source.buffer = audioBuffer;
-        source.connect(audioContext.destination);
-        source.start();
-        source.onended = () => {
-            setPlayingAudio(null);
-        };
-      } else {
-        throw new Error('Received empty audio data.');
-      }
+      // Web Speech API speaks directly - no audio decoding needed
+      await textToSpeech(textToSpeak, language);
+      setPlayingAudio(null);
     } catch (err) {
       console.error('Failed to play audio:', err);
       setError('Sorry, could not play audio for this word.');

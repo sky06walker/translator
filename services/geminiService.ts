@@ -1,5 +1,16 @@
 import type { TranslationResult } from '../types';
 
+interface TTSResponse {
+  success: boolean;
+  audioData?: string | null;
+  contentType?: string;
+  source?: string;
+  useClientTTS?: boolean;
+  clientLang?: string;
+  clientVoice?: string;
+  error?: string;
+}
+
 export async function dictionaryLookup(text: string): Promise<TranslationResult> {
   try {
     const response = await fetch('/api/dictionary-lookup', {
@@ -23,71 +34,75 @@ export async function dictionaryLookup(text: string): Promise<TranslationResult>
   }
 }
 
-export async function textToSpeech(text: string, language: string): Promise<string> {
-  // Map language names to Google Translate language codes
-  const getLanguageCode = (lang: string): string => {
-    switch (lang.toLowerCase()) {
-      case 'malay':
-        return 'ms';
-      case 'chinese':
-        return 'zh-CN';
-      case 'english':
-      default:
-        return 'en';
+// Client-side TTS function with improved voice selection
+async function playClientTTS(text: string, lang: string): Promise<string> {
+  return new Promise((resolve, reject) => {
+    if (!window.speechSynthesis) {
+      reject(new Error('Text-to-speech not supported in this browser'));
+      return;
     }
-  };
 
-  const langCode = getLanguageCode(language);
-
-  try {
-    // Try Google Translate TTS first (better quality, especially for Malay)
-    // Split text into chunks if too long (Google TTS has a character limit)
-    const maxLength = 200;
-    const chunks = text.match(new RegExp(`.{1,${maxLength}}`, 'g')) || [text];
-    
-    for (const chunk of chunks) {
-      const url = `https://translate.google.com/translate_tts?ie=UTF-8&client=tw-ob&tl=${langCode}&q=${encodeURIComponent(chunk)}`;
-      
-      const audio = new Audio(url);
-      await new Promise<void>((resolve, reject) => {
-        audio.onended = () => resolve();
-        audio.onerror = () => reject(new Error('Google TTS failed'));
-        audio.play().catch(reject);
-      });
-      
-      // Small pause between chunks
-      if (chunks.length > 1 && chunk !== chunks[chunks.length - 1]) {
-        await new Promise(resolve => setTimeout(resolve, 200));
+    const getWebSpeechLangCode = (language: string): string => {
+      switch (language.toLowerCase()) {
+        case 'malay':
+        case 'ms-my':
+          return 'ms-MY';
+        case 'chinese':
+        case 'zh-cn':
+          return 'zh-CN';
+        case 'english':
+        case 'en-us':
+        default:
+          return 'en-US';
       }
-    }
-    
-    return '';
-  } catch (error) {
-    console.log('Google TTS failed, falling back to Web Speech API:', error);
-    
-    // Fallback to Web Speech API
-    return new Promise((resolve, reject) => {
-      if (!window.speechSynthesis) {
-        reject(new Error('Text-to-speech not supported in this browser'));
-        return;
-      }
+    };
 
-      const getWebSpeechLangCode = (lang: string): string => {
-        switch (lang.toLowerCase()) {
-          case 'malay':
-            return 'ms-MY';
-          case 'chinese':
-            return 'zh-CN';
-          case 'english':
-          default:
-            return 'en-US';
-        }
-      };
+    const selectBestVoice = (targetLang: string): SpeechSynthesisVoice | null => {
+      const voices = window.speechSynthesis.getVoices();
+      if (voices.length === 0) return null;
+      
+      const langPrefix = targetLang.split('-')[0];
+      const matchingVoices = voices.filter(v => v.lang.startsWith(langPrefix));
+      
+      if (matchingVoices.length === 0) return null;
+      
+      // Priority order for voice selection:
+      // 1. Google voices (highest quality)
+      // 2. Microsoft voices
+      // 3. Native voices
+      // 4. Any other voice
+      
+      const googleVoice = matchingVoices.find(v => 
+        v.name.toLowerCase().includes('google') && !v.name.toLowerCase().includes('uk')
+      );
+      if (googleVoice) return googleVoice;
+      
+      const microsoftVoice = matchingVoices.find(v => 
+        v.name.toLowerCase().includes('microsoft') || v.name.toLowerCase().includes('zira') || v.name.toLowerCase().includes('david')
+      );
+      if (microsoftVoice) return microsoftVoice;
+      
+      const nativeVoice = matchingVoices.find(v => v.localService);
+      if (nativeVoice) return nativeVoice;
+      
+      return matchingVoices[0];
+    };
 
+    const speak = () => {
       const utterance = new SpeechSynthesisUtterance(text);
-      utterance.lang = getWebSpeechLangCode(language);
-      utterance.rate = 0.9;
+      const targetLang = getWebSpeechLangCode(lang);
+      utterance.lang = targetLang;
+      
+      const bestVoice = selectBestVoice(targetLang);
+      if (bestVoice) {
+        utterance.voice = bestVoice;
+        console.log(`Using voice: ${bestVoice.name} for ${targetLang}`);
+      }
+      
+      // Adjust speech parameters for more natural sound
+      utterance.rate = 0.95;  // Slightly slower for clarity
       utterance.pitch = 1.0;
+      utterance.volume = 1.0;
 
       utterance.onend = () => resolve('');
       utterance.onerror = (event) => {
@@ -95,7 +110,62 @@ export async function textToSpeech(text: string, language: string): Promise<stri
       };
 
       window.speechSynthesis.speak(utterance);
+    };
+
+    // Wait for voices to load if they haven't loaded yet
+    const voices = window.speechSynthesis.getVoices();
+    if (voices.length === 0) {
+      window.speechSynthesis.onvoiceschanged = () => {
+        speak();
+      };
+    } else {
+      speak();
+    }
+  });
+}
+
+export async function textToSpeech(text: string, language: string): Promise<string> {
+  try {
+    // Try server-side TTS proxy first (avoids CORS issues)
+    const response = await fetch('/api/text-to-speech', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ text, language }),
     });
+
+    if (response.ok) {
+      const result: TTSResponse = await response.json();
+      
+      if (result.success) {
+        // Check if we should use client-side TTS (for Chinese)
+        if (result.useClientTTS) {
+          console.log('Using client-side TTS for Chinese:', result.clientLang);
+          return await playClientTTS(text, result.clientLang || language);
+        }
+        
+        // Play server-side generated audio
+        if (result.audioData) {
+          const audio = new Audio(`data:${result.contentType};base64,${result.audioData}`);
+          
+          await new Promise<void>((resolve, reject) => {
+            audio.onended = () => resolve();
+            audio.onerror = () => reject(new Error('Audio playback failed'));
+            audio.play().catch(reject);
+          });
+          
+          console.log(`TTS source: ${result.source || 'server-proxy'}`);
+          return '';
+        }
+      }
+    }
+  } catch (error) {
+    console.log('Server-side TTS failed:', error);
   }
+  
+  // Fallback to Web Speech API if server-side TTS fails
+  console.log('Falling back to Web Speech API');
+  return playClientTTS(text, language);
 }
 

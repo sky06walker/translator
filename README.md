@@ -30,12 +30,6 @@ Before you begin, ensure you have the following installed:
     pnpm install
     ```
 
-3.  **Set up environment variables:**
-    Create a `.env` file in the root of the project and add your Google Gemini API key:
-    ```
-    GEMINI_API_KEY=your_api_key
-    ```
-
 ## Build Instructions
 
 ### Development
